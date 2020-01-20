@@ -8,13 +8,13 @@ from dataset.lr_utils import load_dataset  # 读取数据集
 train_set_x_orig, train_set_y, test_set_x_orig, test_set_y, classes = load_dataset()
 # print(train_set_x_orig.shape)  # (209, 64, 64, 3)  209张图片，每张图片是64*64个元素，有“RGB”3个channel
 # 由数据集获取一些基本参数，如训练样本数m，图片大小：
-m_train = train_set_x_orig.shape[0]  # 训练集大小209
-m_test = test_set_x_orig.shape[0]  # 测试集大小209
-num_size = train_set_x_orig.shape[1]  # 图片宽度64，大小是64×64
+# m_train = train_set_x_orig.shape[0]  # 训练集大小209
+# m_test = test_set_x_orig.shape[0]  # 测试集大小209
+# num_size = train_set_x_orig.shape[1]  # 图片宽度64，大小是64×64
 # 向图片数据向量化 （矢量化）
 train_set_x_flatten = train_set_x_orig.reshape(train_set_x_orig.shape[0], -1).T
 test_set_x_flatten = test_set_x_orig.reshape(test_set_x_orig.shape[0], -1).T
-# 对数据进行标准化
+# 对数据进行标准化（先减去均值，然后除以方差，也就是(x-μ)/σ2）
 train_set_x = train_set_x_flatten / 255
 test_set_x = test_set_x_flatten / 255
 
@@ -128,6 +128,15 @@ def logistic_model(X_train, Y_train, X_test, Y_test, learning_rate=0.1, num_iter
     prediction_test = predict(W, b, X_test)
 
     # 计算准确率，分别放在训练集和测试集
+    """
+    我们的predict函数得到的是一个行向量（1，m），这个跟我们的标签Y是一样的形状。我们首先可以让两者相减：
+    prediction_test - Y_test，
+    如果对应位置相同，则变成0，不同的话要么是1要么是-1，于是再取绝对值：
+    np.abs(prediction_test - Y_test)，
+    就相当于得到了“哪些位置预测错了”的一个向量，于是我们再求一个均值：
+    np.mean(np.abs(prediction_test - Y_test))，
+    就是“错误率”了，然后用1来减去它，就是正确率了！
+    """
     accuracy_train = 1 - np.mean(np.abs(prediction_train - Y_train))
     accuracy_test = 1 - np.mean(np.abs(prediction_test - Y_test))
     print("Accuracy on train set:", accuracy_train)
